@@ -27,12 +27,6 @@ jobs:
         idf.py build
         idf.py reconfigure
 
-    - name: Upload firmware
-      uses: actions/upload-artifact@v4
-      with:
-        name: firmware
-        path: build/esp_ota2.bin  # Уточните имя вашего бинарника
-
   release:
     needs: build
     runs-on: ubuntu-latest
