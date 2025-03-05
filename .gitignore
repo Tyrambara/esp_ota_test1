@@ -28,3 +28,6 @@ Thumbs.db
 
 # Local config overrides
 sdkconfig.local
+
+/dependencies.lock
+/managed_components/
