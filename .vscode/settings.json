@@ -11,5 +11,7 @@
         "IDF_CCACHE_ENABLE": "1",
         "ESP_ROM_ELF_DIR": "C:\\Users\\Tyram\\.espressif\\tools\\esp-rom-elfs\\20230320/",
         "IDF_TARGET": "esp32c3"
-    }
+    },
+    "idf.flashType": "UART",
+    "idf.portWin": "COM9"
 }
