@@ -1,76 +1,49 @@
-name: ESP32 OTA Build and Release
+name: ESP32 OTA Build
 
 on:
   push:
     tags:
-      - 'v*.*.*'  # Триггер на теги вида v1.0.0
-
-env:
-  IDF_TARGET: esp32c3
-  IDF_VERSION: v5.1
+      - 'v*'
 
 jobs:
-  build-firmware:
+  build:
     runs-on: ubuntu-latest
-    
     steps:
-    - name: Checkout code
-      uses: actions/checkout@v4
+    - uses: actions/checkout@v4
       with:
-        submodules: 'recursive'  # Важно для компонентов
+        submodules: recursive
 
     - name: Setup ESP-IDF
       uses: espressif/esp-idf-ci-action@v1
       with:
-        esp_idf_version: ${{ env.IDF_VERSION }}
-        target: ${{ env.IDF_TARGET }}
-
-    - name: Install Python dependencies
-      run: |
-        python -m pip install --upgrade pip
-        pip install -r requirements.txt
+        esp_idf_version: v5.1
+        target: esp32c3
 
     - name: Build project
       run: |
-        idf.py set-target ${{ env.IDF_TARGET }}
         idf.py build
 
-    - name: Store firmware version
-      run: |
-        echo "PROJECT_VERSION=$(idf.py --version | grep 'Project version' | cut -d ' ' -f3)" >> $GITHUB_ENV
-
-    - name: Upload artifacts
+    - name: Upload firmware
       uses: actions/upload-artifact@v3
       with:
-        name: firmware-${{ env.PROJECT_VERSION }}
+        name: firmware
         path: |
           build/firmware.bin
-          build/partition_table/partition-table.bin
-          build/bootloader/bootloader.bin
 
-  create-release:
-    needs: build-firmware
+  release:
+    needs: build
     runs-on: ubuntu-latest
     permissions:
       contents: write
 
     steps:
-    - name: Download artifacts
-      uses: actions/download-artifact@v3
+    - uses: actions/download-artifact@v3
       with:
-        name: firmware-${{ env.PROJECT_VERSION }}
+        name: firmware
 
-    - name: Create GitHub Release
+    - name: Create Release
       uses: softprops/action-gh-release@v1
       with:
         tag_name: ${{ github.ref_name }}
-        name: Release ${{ env.PROJECT_VERSION }}
-        body: |
-          ESP32 Firmware Update
-          - Version: ${{ env.PROJECT_VERSION }}
-          - Target: ${{ env.IDF_TARGET }}
-          - IDF Version: ${{ env.IDF_VERSION }}
         files: |
           firmware.bin
-          partition-table.bin
-          bootloader.bin
