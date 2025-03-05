@@ -8,10 +8,9 @@
 #include "protocol_examples_common.h"
 #include "esp_app_desc.h"
 #include "esp_app_format.h"
+#include "esp_crt_bundle.h"
 
 static const char *TAG = "OTA_UPDATE";
-
-extern const uint8_t github_root_cert_pem_start[] asm("_binary_github_crt_start");
 
 #define OTA_URL CONFIG_EXAMPLE_FIRMWARE_UPG_URL
 
@@ -21,7 +20,7 @@ static void ota_task(void *pvParameter) {
     while(1) {
         esp_http_client_config_t config = {
             .url = CONFIG_EXAMPLE_FIRMWARE_UPG_URL,
-            .cert_pem = (const char *)github_root_cert_pem_start,
+            .crt_bundle_attach = esp_crt_bundle_attach,
             .timeout_ms = 10000
         };
         
