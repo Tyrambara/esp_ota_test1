@@ -1,4 +1,4 @@
-name: ESP32 Firmware Build
+name: ESP32 OTA Build
 
 on:
   push:
@@ -7,15 +7,7 @@ on:
 
 jobs:
   build:
-    strategy:
-      matrix:
-        target: [esp32c3]
-        include:
-          - target: esp32c3
-            build_dir: build-esp32c3
-            
     runs-on: ubuntu-latest
-    
     steps:
     - uses: actions/checkout@v4
       with:
@@ -25,22 +17,17 @@ jobs:
       uses: espressif/esp-idf-ci-action@v1
       with:
         esp_idf_version: v5.1
-        target: ${{ matrix.target }}
+        target: esp32c3
 
     - name: Build project
       run: |
-        idf.py set-target ${{ matrix.target }}
         idf.py build
-        mv build ${{ matrix.build_dir }}
 
-    - name: Upload Artifacts
+    - name: Upload firmware
       uses: actions/upload-artifact@v4
       with:
-        name: firmware-${{ matrix.target }}
-        path: |
-          ${{ matrix.build_dir }}/firmware.bin
-          ${{ matrix.build_dir }}/partition_table/partition-table.bin
-          ${{ matrix.build_dir }}/bootloader/bootloader.bin
+        name: firmware
+        path: build/firmware.bin
 
   release:
     needs: build
@@ -49,16 +36,13 @@ jobs:
       contents: write
 
     steps:
-    - name: Download Artifacts
-      uses: actions/download-artifact@v4
+    - uses: actions/download-artifact@v4
       with:
-        pattern: firmware-*
-        path: artifacts
-        merge-multiple: true
+        name: firmware
 
     - name: Create Release
       uses: softprops/action-gh-release@v1
       with:
         tag_name: ${{ github.ref_name }}
         files: |
-          artifacts/**/*.bin
+          firmware.bin
