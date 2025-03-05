@@ -13,18 +13,20 @@ jobs:
       with:
         submodules: recursive
 
+    - name: Purge build artifacts
+      run: |
+        rm -rf build sdkconfig sdkconfig.old
+
     - name: Setup ESP-IDF
       uses: espressif/esp-idf-ci-action@v1
       with:
         esp_idf_version: v5.1
         target: esp32c3
 
-    - name: Full Clean
-      run: idf.py fullclean
-
     - name: Build project
       run: |
         idf.py set-target esp32c3
+        idf.py fullclean
         idf.py build
 
     - name: Upload firmware
@@ -32,22 +34,3 @@ jobs:
       with:
         name: firmware
         path: build/firmware.bin
-
-  release:
-    needs: build
-    runs-on: ubuntu-latest
-    permissions:
-      contents: write
-
-    steps:
-    - uses: actions/download-artifact@v4
-      with:
-        name: firmware
-        path: .
-
-    - name: Create Release
-      uses: softprops/action-gh-release@v1
-      with:
-        tag_name: ${{ github.ref_name }}
-        files: |
-          firmware.bin
