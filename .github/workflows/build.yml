@@ -15,7 +15,7 @@ jobs:
         path: src
 
     - name: Setup ESP-IDF
-      uses: espressif/esp-idf-ci-action@v1
+      uses: espressif/esp-idf-ci-action@v2
       with:
         esp_idf_version: v5.1
         target: esp32c3
@@ -23,7 +23,7 @@ jobs:
     - name: Clean build artifacts
       run: |
         cd src
-        idf.py fullclean  # Полная очистка предыдущих сборок
+        idf.py fullclean
 
     - name: Build project
       run: |
@@ -49,7 +49,7 @@ jobs:
         path: artifacts
 
     - name: Create Release
-      uses: softprops/action-gh-release@v1
+      uses: softprops/action-gh-release@v2
       with:
         tag_name: ${{ github.ref_name }}
         files: |
