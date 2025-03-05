@@ -12,29 +12,26 @@ jobs:
     - uses: actions/checkout@v4
       with:
         submodules: recursive
-        path: src
 
     - name: Setup ESP-IDF
-      uses: espressif/esp-idf-ci-action@v2
+      uses: espressif/esp-idf-ci-action@v1
       with:
         esp_idf_version: v5.1
         target: esp32c3
-        working-directory: src
-    - name: Clean build artifacts
-      run: |
-        cd src
-        idf.py fullclean
+
+    - name: Full Clean
+      run: idf.py fullclean
 
     - name: Build project
       run: |
-        cd src
+        idf.py set-target esp32c3
         idf.py build
 
     - name: Upload firmware
       uses: actions/upload-artifact@v4
       with:
         name: firmware
-        path: src/build/firmware.bin
+        path: build/firmware.bin
 
   release:
     needs: build
@@ -46,11 +43,11 @@ jobs:
     - uses: actions/download-artifact@v4
       with:
         name: firmware
-        path: artifacts
+        path: .
 
     - name: Create Release
-      uses: softprops/action-gh-release@v2
+      uses: softprops/action-gh-release@v1
       with:
         tag_name: ${{ github.ref_name }}
         files: |
-          artifacts/firmware.bin
+          firmware.bin
