@@ -19,14 +19,6 @@ jobs:
         esp_idf_version: v5.1
         target: esp32c3
 
-    - name: Build project
-      run: |
-        # Все команды IDF должны быть в одном шаге
-        idf.py fullclean
-        idf.py set-target esp32c3
-        idf.py build
-        idf.py reconfigure
-
   release:
     needs: build
     runs-on: ubuntu-latest
