@@ -27,8 +27,7 @@ jobs:
       uses: actions/upload-artifact@v4
       with:
         name: firmware
-        path: |
-          build/firmware.bin
+        path: build/firmware.bin
 
   release:
     needs: build
@@ -42,7 +41,7 @@ jobs:
         name: firmware
 
     - name: Create Release
-      uses: softprops/action-gh-release@v1
+      uses: softprops/action-gh-release@v2
       with:
         tag_name: ${{ github.ref_name }}
         files: |
