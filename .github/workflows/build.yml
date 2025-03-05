@@ -22,7 +22,7 @@ jobs:
         submodules: recursive
 
     - name: Setup ESP-IDF
-      uses: espressif/esp-idf-ci-action@v2
+      uses: espressif/esp-idf-ci-action@v1
       with:
         esp_idf_version: v5.1
         target: ${{ matrix.target }}
@@ -57,7 +57,7 @@ jobs:
         merge-multiple: true
 
     - name: Create Release
-      uses: softprops/action-gh-release@v2
+      uses: softprops/action-gh-release@v1
       with:
         tag_name: ${{ github.ref_name }}
         files: |
