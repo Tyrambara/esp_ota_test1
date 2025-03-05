@@ -19,6 +19,12 @@ jobs:
         esp_idf_version: v5.1
         target: esp32c3
 
+    - name: Upload firmware
+      uses: actions/upload-artifact@v4
+      with:
+        name: firmware
+        path: build/esp_ota2.bin
+
   release:
     needs: build
     runs-on: ubuntu-latest
