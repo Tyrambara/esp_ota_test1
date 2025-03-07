@@ -1,33 +1,4 @@
-/build/
-/sdkconfig
-/sdkconfig.old
-
-# IDE files
-.vscode/
-.idea/
-*.swp
-*.swo
-
-# Python cache
-__pycache__/
-*.pyc
-
-# Generated files
-/managed_components/
-/log.txt
-/dependencies.lock
-
-# Project specific
-/firmware.bin
-/partition_table/
-/bootloader/
-
-# System
-.DS_Store
-Thumbs.db
-
-# Local config overrides
+.vscode
+/build
+sdkconfig.old
 sdkconfig.local
-
-/dependencies.lock
-/managed_components/

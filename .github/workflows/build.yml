@@ -13,10 +13,16 @@ jobs:
       with:
         submodules: recursive
 
+    - name: Set config
+      run: |
+        echo "CONFIG_EXAMPLE_WIFI_SSID=\"${{ secrets.WIFI_SSID}}\"" > sdkconfig.local
+        echo "CONFIG_EXAMPLE_WIFI_PASSWORD=\"${{ secrets.WIFI_PASS}}\"" >> sdkconfig.local
+        echo "CONFIG_OTA_UPDATE_URL=\"${{ secrets.OTA_URL}}\"" >> sdkconfig.local
+
     - name: Setup ESP-IDF
       uses: espressif/esp-idf-ci-action@v1
       with:
-        esp_idf_version: v5.1
+        esp_idf_version: v5.4.0
         target: esp32c3
 
     - name: Upload firmware
