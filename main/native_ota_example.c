@@ -15,7 +15,7 @@ static const char *TAG = "OTA_UPDATE";
 #define OTA_URL CONFIG_EXAMPLE_FIRMWARE_UPG_URL
 
 static void ota_task(void *pvParameter) {
-    const int CHECK_INTERVAL_MS = 36000; // 1 час
+    const int CHECK_INTERVAL_MS = 3600; // 1 час
     
     while(1) {
         esp_http_client_config_t config = {
