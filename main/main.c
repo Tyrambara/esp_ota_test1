@@ -24,7 +24,7 @@ static const char *TAG = "OTA_UPDATE";
 #define OTA_URL CONFIG_OTA_UPDATE_URL
 
 static void ota_task(void *pvParameter) {
-    const int CHECK_INTERVAL_MS = 300000; // 5min
+    const int CHECK_INTERVAL_MS = 30000; // 5min
     
     while(1) {
         esp_http_client_config_t config = {
@@ -68,25 +68,72 @@ static void ota_task(void *pvParameter) {
     }
 }
 
-void app_main(void) {
-    ESP_ERROR_CHECK(nvs_flash_init());
+static void NetworkEventHandler(void* arg, esp_event_base_t event_base,
+    int32_t event_id, void* event_data) {
+    if (event_base == WIFI_EVENT && event_id == WIFI_EVENT_STA_START) {
+        esp_wifi_connect();
+    } else if (event_base == WIFI_EVENT && event_id == WIFI_EVENT_STA_DISCONNECTED) {
+        esp_wifi_connect();
+        ESP_LOGI("wifi", "Retrying to connect to Wifi...");
+    } else if (event_base == IP_EVENT && event_id == IP_EVENT_STA_GOT_IP) {
+        ip_event_got_ip_t* event = (ip_event_got_ip_t*) event_data;
+        ESP_LOGI("wifi", "got ip:" IPSTR, IP2STR(&event->ip_info.ip));
+    }
+}
+
+void InitNVS() {
+    esp_err_t ret = nvs_flash_init();
+    if (ret == ESP_ERR_NVS_NO_FREE_PAGES || ret == ESP_ERR_NVS_NEW_VERSION_FOUND) {
+        ESP_ERROR_CHECK(nvs_flash_erase());
+        ret = nvs_flash_init();
+    }
+    ESP_ERROR_CHECK(ret);
+}
+
+void InitWifi() {
     ESP_ERROR_CHECK(esp_netif_init());
-    ESP_ERROR_CHECK(esp_event_loop_create_default());
+    ESP_ERROR_CHECK(esp_event_loop_create_default());    
+    esp_netif_create_default_wifi_sta();
 
     wifi_init_config_t cfg = WIFI_INIT_CONFIG_DEFAULT();
     ESP_ERROR_CHECK(esp_wifi_init(&cfg));
-    ESP_ERROR_CHECK(esp_wifi_set_storage(WIFI_STORAGE_RAM));
     ESP_ERROR_CHECK(esp_wifi_set_mode(WIFI_MODE_STA));
-    ESP_ERROR_CHECK(esp_wifi_start());
-    
+
     wifi_config_t wifi_config = {
         .sta = {
             .ssid = WIFI_SSID,
-            .password = WIFI_PASSWORD,
-        },
+            .password = WIFI_PASSWORD
+        }
     };
+
+    ESP_ERROR_CHECK(esp_event_handler_instance_register(WIFI_EVENT, ESP_EVENT_ANY_ID, &NetworkEventHandler, NULL, NULL));
+    ESP_ERROR_CHECK(esp_event_handler_instance_register(IP_EVENT, IP_EVENT_STA_GOT_IP, &NetworkEventHandler, NULL, NULL));
+
     ESP_ERROR_CHECK(esp_wifi_set_config(WIFI_IF_STA, &wifi_config));
-    ESP_ERROR_CHECK(esp_wifi_connect());
+    ESP_ERROR_CHECK(esp_wifi_start());
+}
+
+void app_main(void) {
+    //ESP_ERROR_CHECK(nvs_flash_init());
+    //ESP_ERROR_CHECK(esp_netif_init());
+    //ESP_ERROR_CHECK(esp_event_loop_create_default());
+
+    //wifi_init_config_t cfg = WIFI_INIT_CONFIG_DEFAULT();
+    //ESP_ERROR_CHECK(esp_wifi_init(&cfg));
+    //ESP_ERROR_CHECK(esp_wifi_set_storage(WIFI_STORAGE_RAM));
+    //ESP_ERROR_CHECK(esp_wifi_set_mode(WIFI_MODE_STA));
+    //ESP_ERROR_CHECK(esp_wifi_start());
+    
+    //wifi_config_t wifi_config = {
+    //    .sta = {
+    //        .ssid = WIFI_SSID,
+    //        .password = WIFI_PASSWORD,
+    //    },
+    //};
+    //ESP_ERROR_CHECK(esp_wifi_set_config(WIFI_IF_STA, &wifi_config));
+    //ESP_ERROR_CHECK(esp_wifi_connect());
+    InitNVS();
+    InitWifi();
 
     const esp_app_desc_t *desc = esp_app_get_description();
     ESP_LOGI(TAG, "Current version: %s", desc->version);
