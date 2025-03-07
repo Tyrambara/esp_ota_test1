@@ -30,7 +30,9 @@ static void ota_task(void *pvParameter) {
         esp_http_client_config_t config = {
             .url = OTA_URL,
             .crt_bundle_attach = esp_crt_bundle_attach,
-            .timeout_ms = 10000
+            .timeout_ms = 30000,
+            .buffer_size = 4096,
+            .buffer_size_tx = 2048
         };
         
         esp_https_ota_handle_t ota_handle = NULL;
@@ -38,7 +40,8 @@ static void ota_task(void *pvParameter) {
         
         esp_https_ota_config_t ota_config = {
             .http_config = &config,
-            .partial_http_download = true
+            .partial_http_download = true,
+            .max_http_request_size = 4096
         };
         
         esp_err_t err = esp_https_ota_begin(&ota_config, &ota_handle);
