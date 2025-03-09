@@ -378,7 +378,7 @@ CONFIG_APP_COMPILE_TIME_DATE=y
 # CONFIG_APP_EXCLUDE_PROJECT_VER_VAR is not set
 # CONFIG_APP_EXCLUDE_PROJECT_NAME_VAR is not set
 CONFIG_APP_PROJECT_VER_FROM_CONFIG=y
-CONFIG_APP_PROJECT_VER="0.0.5"
+CONFIG_APP_PROJECT_VER="0.0.1"
 CONFIG_APP_RETRIEVE_LEN_ELF_SHA=9
 # end of Application manager
 
@@ -466,9 +466,9 @@ CONFIG_PARTITION_TABLE_MD5=y
 #
 # Example Configuration
 #
-CONFIG_EXAMPLE_WIFI_SSID="Riba_Inet"
-CONFIG_EXAMPLE_WIFI_PASSWORD="I1love2inet3"
-CONFIG_OTA_UPDATE_URL="https://github.com/Tyrambara/esp_ota_test1/releases/latest/download/esp_ota2.bin"
+CONFIG_EXAMPLE_WIFI_SSID="myssid"
+CONFIG_EXAMPLE_WIFI_PASSWORD="mypassword"
+CONFIG_OTA_UPDATE_URL="https://github.com/user/repo/releases/latest/download/firmware.bin"
 # end of Example Configuration
 
 #
