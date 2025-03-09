@@ -1,5 +1,3 @@
-//idf.py -D SDKCONFIG="sdkconfig.local" reconfigure
-
 #include <stdio.h>
 #include <string.h>
 #include "freertos/FreeRTOS.h"
@@ -19,20 +17,55 @@
 
 static const char *TAG = "OTA_UPDATE";
 
+#define HASH_LEN 32
+
 #define WIFI_SSID CONFIG_EXAMPLE_WIFI_SSID
 #define WIFI_PASSWORD CONFIG_EXAMPLE_WIFI_PASSWORD
 #define OTA_URL CONFIG_OTA_UPDATE_URL
 
+esp_err_t _http_event_handler(esp_http_client_event_t *evt)
+{
+    switch (evt->event_id) {
+    case HTTP_EVENT_ERROR:
+        ESP_LOGD(TAG, "HTTP_EVENT_ERROR");
+        break;
+    case HTTP_EVENT_ON_CONNECTED:
+        ESP_LOGD(TAG, "HTTP_EVENT_ON_CONNECTED");
+        break;
+    case HTTP_EVENT_HEADER_SENT:
+        ESP_LOGD(TAG, "HTTP_EVENT_HEADER_SENT");
+        break;
+    case HTTP_EVENT_ON_HEADER:
+        ESP_LOGD(TAG, "HTTP_EVENT_ON_HEADER, key=%s, value=%s", evt->header_key, evt->header_value);
+        break;
+    case HTTP_EVENT_ON_DATA:
+        ESP_LOGD(TAG, "HTTP_EVENT_ON_DATA, len=%d", evt->data_len);
+        break;
+    case HTTP_EVENT_ON_FINISH:
+        ESP_LOGD(TAG, "HTTP_EVENT_ON_FINISH");
+        break;
+    case HTTP_EVENT_DISCONNECTED:
+        ESP_LOGD(TAG, "HTTP_EVENT_DISCONNECTED");
+        break;
+    case HTTP_EVENT_REDIRECT:
+        ESP_LOGD(TAG, "HTTP_EVENT_REDIRECT");
+        break;
+    }
+    return ESP_OK;
+}
+
 static void ota_task(void *pvParameter) {
-    const int CHECK_INTERVAL_MS = 30000; // 5min
+    const int CHECK_INTERVAL_MS = 30000;
     
     while(1) {
         esp_http_client_config_t config = {
             .url = OTA_URL,
             .crt_bundle_attach = esp_crt_bundle_attach,
-            .timeout_ms = 30000,
-            .buffer_size = 4096,
-            .buffer_size_tx = 2048
+            .keep_alive_enable = true,
+            .event_handler = _http_event_handler,
+            //.timeout_ms = 30000,
+            //.buffer_size = 4096,
+            //.buffer_size_tx = 2048
         };
         
         esp_https_ota_handle_t ota_handle = NULL;
@@ -40,8 +73,8 @@ static void ota_task(void *pvParameter) {
         
         esp_https_ota_config_t ota_config = {
             .http_config = &config,
-            .partial_http_download = true,
-            .max_http_request_size = 4096
+            //.partial_http_download = true,
+            //.max_http_request_size = 4096
         };
         
         esp_err_t err = esp_https_ota_begin(&ota_config, &ota_handle);
@@ -116,26 +149,34 @@ void InitWifi() {
     ESP_ERROR_CHECK(esp_wifi_start());
 }
 
-void app_main(void) {
-    //ESP_ERROR_CHECK(nvs_flash_init());
-    //ESP_ERROR_CHECK(esp_netif_init());
-    //ESP_ERROR_CHECK(esp_event_loop_create_default());
+static void print_sha256(const uint8_t *image_hash, const char *label)
+{
+    char hash_print[HASH_LEN * 2 + 1];
+    hash_print[HASH_LEN * 2] = 0;
+    for (int i = 0; i < HASH_LEN; ++i) {
+        sprintf(&hash_print[i * 2], "%02x", image_hash[i]);
+    }
+    ESP_LOGI(TAG, "%s %s", label, hash_print);
+}
 
-    //wifi_init_config_t cfg = WIFI_INIT_CONFIG_DEFAULT();
-    //ESP_ERROR_CHECK(esp_wifi_init(&cfg));
-    //ESP_ERROR_CHECK(esp_wifi_set_storage(WIFI_STORAGE_RAM));
-    //ESP_ERROR_CHECK(esp_wifi_set_mode(WIFI_MODE_STA));
-    //ESP_ERROR_CHECK(esp_wifi_start());
-    
-    //wifi_config_t wifi_config = {
-    //    .sta = {
-    //        .ssid = WIFI_SSID,
-    //        .password = WIFI_PASSWORD,
-    //    },
-    //};
-    //ESP_ERROR_CHECK(esp_wifi_set_config(WIFI_IF_STA, &wifi_config));
-    //ESP_ERROR_CHECK(esp_wifi_connect());
+static void get_sha256_of_partitions(void)
+{
+    uint8_t sha_256[HASH_LEN] = { 0 };
+    esp_partition_t partition;
+
+    partition.address   = ESP_BOOTLOADER_OFFSET;
+    partition.size      = ESP_PARTITION_TABLE_OFFSET;
+    partition.type      = ESP_PARTITION_TYPE_APP;
+    esp_partition_get_sha256(&partition, sha_256);
+    print_sha256(sha_256, "SHA-256 for bootloader: ");
+
+    esp_partition_get_sha256(esp_ota_get_running_partition(), sha_256);
+    print_sha256(sha_256, "SHA-256 for current firmware: ");
+}
+
+void app_main(void) {
     InitNVS();
+    get_sha256_of_partitions();
     InitWifi();
 
     const esp_app_desc_t *desc = esp_app_get_description();
